@@ -1,3 +1,12 @@
+const mongoose = require('mongoose')
+const Pizza = require('./models/pizza')
+const url = 'mongodb://localhost:27017/pizzaPlace'
+
+const connection = mongoose.connect(url)
+connection.then((db) => {
+  console.log('conectado ao mongodb ')
+}).catch(console.log)
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
