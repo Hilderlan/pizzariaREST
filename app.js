@@ -2,24 +2,25 @@ const mongoose = require('mongoose')
 const Pizza = require('./models/pizza')
 const url = 'mongodb://localhost:27017/pizzaPlace'
 
-const connection = mongoose.connect(url)
-connection.then((db) => {
-  console.log('conectado ao mongodb ')
-}).catch(console.log)
+mongoose.set('useCreateIndex', true)
+mongoose.connect(url, { useUnifiedTopology: true, useNewUrlParser: true })
+  .then(() => {
+    console.log('conectado ao mongodb ')
+  }).catch(console.log)
 
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+let createError = require('http-errors');
+let express = require('express');
+let path = require('path');
+let cookieParser = require('cookie-parser');
+let logger = require('morgan');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var pizzaRouter = require('./routes/pizzas');
-var promocaoRouter = require('./routes/promocoes');
-var comboRouter = require('./routes/combos');
+let indexRouter = require('./routes/index');
+let usersRouter = require('./routes/users');
+let pizzaRouter = require('./routes/pizzas');
+let promocaoRouter = require('./routes/promocoes');
+let comboRouter = require('./routes/combos');
 
-var app = express();
+let app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -52,5 +53,9 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+app.listen('3000', () => {
+  console.log('Porta 3000')
+})
 
 module.exports = app;
