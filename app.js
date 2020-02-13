@@ -1,42 +1,50 @@
-const mongoose = require('mongoose')
-const Pizza = require('./models/pizza')
-const url = 'mongodb://localhost:27017/pizzaPlace'
+const path = require("path")
+const express = require("express")
 
-mongoose.set('useCreateIndex', true)
-mongoose.connect(url, { useUnifiedTopology: true, useNewUrlParser: true })
-  .then(() => {
-    console.log('conectado ao mongodb ')
-  }).catch(console.log)
+const createError = require("http-errors")
+const cookieParser = require("cookie-parser")
+const logger = require("morgan")
 
-let createError = require('http-errors');
-let express = require('express');
-let path = require('path');
-let cookieParser = require('cookie-parser');
-let logger = require('morgan');
+const passport = require('passport')
+const auth = require('./autenticacao');
 
-let indexRouter = require('./routes/index');
-let usersRouter = require('./routes/users');
-let pizzaRouter = require('./routes/pizzas');
-let promocaoRouter = require('./routes/promocoes');
-let comboRouter = require('./routes/combos');
+const indexRouter = require("./routes/index")
+const usersRouter = require("./routes/users")
 
-let app = express();
+const pizzasRouter = require("./routes/pizzas")
+const promocoesRouter = require('./routes/promocoes')
+const combosRouter = require('./routes/combos')
+
+const app = express()
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+app.set("views", path.join(__dirname, "views"))
+app.set("view engine", "ejs")
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(logger("dev"))
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
+app.use(cookieParser("secret"))
+
+// app.use(
+//   session({
+//     name: "secret",
+//     secret: "secret",
+//     saveUninitialized: false,
+//     resave: false,
+//     store: new FileStore()
+//   })
+// )
+
+app.use(express.static(path.join(__dirname, "public")))
+
+app.use(passport.initialize())
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.use('/pizzas', pizzaRouter);
-app.use('/promocoes', promocaoRouter);
-app.use('/combos', comboRouter);
+app.use('/pizzas', pizzasRouter);
+app.use('/promocoes', promocoesRouter);
+app.use('/combos', combosRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -54,7 +62,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-app.listen('3000', () => {
+app.listen('4000', () => {
   console.log('Porta 3000')
 })
 

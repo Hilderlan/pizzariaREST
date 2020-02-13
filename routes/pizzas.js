@@ -1,5 +1,8 @@
 const express = require("express")
+const { unsupported } = require('../utils')
 const Pizza = require("../models/pizza")
+const auth = require('../autenticacao')
+
 const router = express.Router()
 
 router.route("/")
@@ -8,7 +11,7 @@ router.route("/")
     res.setHeader("Content-Type", "application/json")
     next()
   })
-  .get((req, res, next) => {
+  .get(auth.verifyUser, (req, res, next) => {
     Pizza.find({})
       .exec()
       .then((pizza) =>{
@@ -23,12 +26,9 @@ router.route("/")
       })
       .catch(next)
   })
-  .put((req, res) => {
-    res.statusCode = 403
-    res.json({ error: "operação PUT não suportada em /pizzas" })
-  })
-  .delete((req, res, next) => {
-    Pizza.remove({})
+  .put(unsupported(['GET', 'POST', 'DELETE']))
+  .delete((_, res, next) => {
+    Pizza.deleteMany({})
       .exec()
       .then((pizza) =>{
         res.json(pizza)
@@ -45,12 +45,7 @@ router.route("/:pizzaId")
       })
       .catch(next)
   })
-  .post((req, res) => {
-    res.statusCode = 403
-    res.json({
-      error: "operação POST não suportada em /pizzas/" + req.params.pizzaId
-    })
-  })
+  .post(unsupported(['GET', 'PUT', 'DELETE']))
   .put((req, res, next) => {
     Pizza.findByIdAndUpdate(
       req.params.pizzaId,
@@ -102,12 +97,7 @@ router.route("/:pizzaId/comments")
       })
       .catch(next)
   })
-  .put((req, res, next) => {
-    const { originalUrl } = req
-    res
-      .status(405)
-      .json({ error: `operação PUT não suportada em ${originalUrl}` })
-  })
+  .post(unsupported(['GET', 'POST', 'DELETE']))
   .delete((req, res, next) => {
     Pizza.findById(req.params.pizzaId)
       .exec()
@@ -146,12 +136,7 @@ router.route("/:pizzaId/comments/:commentId")
       })
       .catch(next)
   })
-  .post((req, res) => {
-    const { originalUrl } = req
-    res
-      .status(405)
-      .json({ error: `operação POST não suportada em ${originalUrl}` })
-  })
+  .post(unsupported(['GET', 'PUT', 'DELETE']))
   .put((req, res, next) => {
     Pizza.findById(req.params.pizzaId)
       .exec()
