@@ -31,7 +31,7 @@ pizzaRouter.route('/:pizzaId')
       .catch(next)
   })
   .post(unsupported(['GET', 'PUT', 'DELETE']))
-  .put((req, res, next) => {
+  .put(auth.verifyUser, (req, res, next) => {
     Pizza.findByIdAndUpdate(
       req.params.pizzaId,
       { $set: req.body },
@@ -39,7 +39,7 @@ pizzaRouter.route('/:pizzaId')
       .then(res.json.bind(res))
       .catch(next)
   })
-  .delete((req, res, next) => {
+  .delete(auth.verifyUser, (req, res, next) => {
     Pizza.findByIdAndRemove(req.params.pizzaId).exec()
       .then(res.json.bind(res))
       .catch(next)
@@ -52,7 +52,7 @@ pizzaRouter.route('/:pizzaId/comments')
       .then(res.json.bind(res))
       .catch(next)
   })
-  .post((req, res, next) => {
+  .post(auth.verifyUser, (req, res, next) => {
     Pizza.findById(req.params.pizzaId).exec()
       .then((pizza) => {
         if (!pizza) return null
@@ -63,7 +63,7 @@ pizzaRouter.route('/:pizzaId/comments')
       .catch(next)
   })
   .put(unsupported(['GET', 'POST', 'DELETE']))
-  .delete((req, res, next) => {
+  .delete(auth.verifyUser, (req, res, next) => {
     Pizza.findById(req.params.pizzaId).exec()
       .then((pizza) => {
         if (!pizza) return null
@@ -87,7 +87,7 @@ pizzaRouter.route('/:pizzaId/comments/:commentId')
       .catch(next)
   })
   .post(unsupported(['GET', 'PUT', 'DELETE']))
-  .put((req, res, next) => {
+  .put(auth.verifyUser, (req, res, next) => {
     Pizza.findById(req.params.pizzaId).exec()
       .then((pizza) => {
         if (!pizza) return null
@@ -100,7 +100,7 @@ pizzaRouter.route('/:pizzaId/comments/:commentId')
       .then(res.json.bind(res))
       .catch(next)
   })
-  .delete((req, res, next) => {
+  .delete(auth.verifyUser, (req, res, next) => {
     Pizza.findById(req.params.pizzaId)
       .then((pizza) => {
         if (!pizza) return null

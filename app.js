@@ -13,6 +13,7 @@ const auth = require("./autenticacao")
 
 const app = express()
 
+// Redireciona tudo para HTTPS
 app.all("*", (req, res, next) => {
   if (!req.secure) {
     return res.redirect(
@@ -25,10 +26,9 @@ app.all("*", (req, res, next) => {
 
 const indexRouter = require("./routes/index")
 const usersRouter = require("./routes/users")
-
 const pizzasRouter = require("./routes/pizzas")
-// const promosRouter = require('./routes/promos')
-// const combosRouter = require('./routes/combos')
+const promocoesRouter = require('./routes/promocoes')
+const combosRouter = require('./routes/combos')
 const uploadRouter = require('./routes/upload')
 
 // view engine setup
@@ -40,27 +40,16 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser("secret"))
 
-// app.use(
-//   session({
-//     name: "secret",
-//     secret: "secret",
-//     saveUninitialized: false,
-//     resave: false,
-//     store: new FileStore()
-//   })
-// )
-
 app.use(express.static(path.join(__dirname, "public")))
 
 app.use(passport.initialize())
 
 app.use("/", indexRouter)
 app.use("/users", usersRouter)
-
 app.use("/pizzas", pizzasRouter)
-// app.use('/promos', promoRouter)
-// app.use('/combos', comboRouter)
-app.use('/imageUpload', uploadRouter)
+app.use('/promocoes', promocoesRouter)
+app.use('/combos', combosRouter)
+app.use('/upload', uploadRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -6,7 +6,7 @@ const auth = require('../autenticacao')
 
 var router = express.Router()
 
-/* GET users listing. */
+/* GET users listing if admin. */
 router.get("/", auth.verifyUser, (_, res, next) => {
   User.find({}).exec()
     .then(res.json.bind(res))
@@ -17,7 +17,7 @@ router.post("/signup", (req, res, next) => {
   User.register(
     new User({
       username: req.body.username,
-      admin: true
+      admin: false
     }),
     req.body.password,
     (err, usuario) => {
@@ -26,7 +26,7 @@ router.post("/signup", (req, res, next) => {
       } else {
         passport.authenticate("local")(req, res, () => {
           console.log(usuario);
-          res.send("usuário adicionado com sucesso")
+          res.send(`Usuário ${usuario.username} (Admin: ${usuario.admin}) adicionado com sucesso`)
         })
       }
     }
@@ -37,7 +37,7 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
   res.json({sucess: true, token, message: "logado com sucesso"})
 })
 
-router.delete("/delete", passport.authenticate("local"), (req, res, next) => {
+router.delete("/delete", auth.verifyUser, passport.authenticate("local"), (req, res, next) => {
   User.deleteMany({}).exec()
     .then(res.json.bind(res))
     .catch(next)

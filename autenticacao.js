@@ -15,6 +15,8 @@ exports.jwt = passport.use(
   new Strategy(opts, (payload, done) => {
     User.findById(payload._id, (err, usuario) => {
       if (err) return done(err, false)
+
+      // Delimitando a apenas usuarios que sao admin terem acesso a algumas funcionalidades
       if (usuario["admin"]){
         console.log(usuario);
         

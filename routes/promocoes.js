@@ -1,5 +1,9 @@
 const express = require("express")
+
+const { unsupported } = require('../utils')
 const Promocao = require("../models/promocao")
+const auth = require('../autenticacao')
+
 const router = express.Router()
 
 router.route("/")
@@ -16,18 +20,18 @@ router.route("/")
       })
       .catch(next)
   })
-  .post((req, res, next) => {
+  .post(auth.verifyUser, (req, res, next) => {
     Promocao.create(req.body)
       .then((promocao) =>{
         res.json(promocao)
       })
       .catch(next)
   })
-  .put((req, res) => {
+  .put(auth.verifyUser, (req, res) => {
     res.statusCode = 403
     res.json({ error: "operação PUT não suportada em /promocoes" })
   })
-  .delete((req, res, next) => {
+  .delete(auth.verifyUser, (req, res, next) => {
     Promocao.remove({})
       .exec()
       .then((promocao) =>{
@@ -45,13 +49,13 @@ router.route("/:promocaoID")
       })
       .catch(next)
   })
-  .post((req, res) => {
+  .post(auth.verifyUser, (req, res) => {
     res.statusCode = 403
     res.json({
       error: "operação POST não suportada em /promocaos/" + req.params.promocaoID
     })
   })
-  .put((req, res, next) => {
+  .put(auth.verifyUser, (req, res, next) => {
     Promocao.findByIdAndUpdate(
       req.params.promocaoID,
       { $set: req.body },
@@ -63,7 +67,7 @@ router.route("/:promocaoID")
       })
       .catch(next)
   })
-  .delete((req, res, next) => {
+  .delete(auth.verifyUser, (req, res, next) => {
     Promocao.findByIdAndRemove(req.params.promocaoID)
       .exec()
       .then((promocao) =>{
@@ -86,7 +90,7 @@ router.route("/:promocaoID/tags")
       })
       .catch(next)
   })
-  .post((req, res, next) => {
+  .post(auth.verifyUser, (req, res, next) => {
     Promocao.findById(req.params.promocaoID)
       .exec()
       .then(promocao => {
@@ -102,13 +106,13 @@ router.route("/:promocaoID/tags")
       })
       .catch(next)
   })
-  .put((req, res, next) => {
+  .put(auth.verifyUser, (req, res, next) => {
     const { originalUrl } = req
     res
       .status(405)
       .json({ error: `operação PUT não suportada em ${originalUrl}` })
   })
-  .delete((req, res, next) => {
+  .delete(auth.verifyUser, (req, res, next) => {
     Promocao.findById(req.params.promocaoID)
       .exec()
       .then(promocao => {
@@ -146,13 +150,13 @@ router.route("/:promocaoID/tags/:tagID")
       })
       .catch(next)
   })
-  .post((req, res) => {
+  .post(auth.verifyUser, (req, res) => {
     const { originalUrl } = req
     res
       .status(405)
       .json({ error: `operação POST não suportada em ${originalUrl}` })
   })
-  .put((req, res, next) => {
+  .put(auth.verifyUser, (req, res, next) => {
     Promocao.findById(req.params.promocaoID)
       .exec()
       .then(promocao => {
@@ -175,7 +179,7 @@ router.route("/:promocaoID/tags/:tagID")
       })
       .catch(next)
   })
-  .delete((req, res, next) => {
+  .delete(auth.verifyUser, (req, res, next) => {
     Promocao.findById(req.params.promocaoID)
       .exec()
       .then(promocao => {

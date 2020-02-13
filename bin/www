@@ -19,9 +19,11 @@ const dbname = process.env.DBNAME || "pizzariarest"
  * Get port from environment and store in Express.
  */
 
+// Porta 3443
 const port = normalizePort(process.env.PORT || "3000")
 app.set("port", port + 443)
 
+// Definindo as chaves e certificados gerados
 const opts = {
   key: fs.readFileSync(`${__dirname}/privat.key`),
   cert: fs.readFileSync(`${__dirname}/certificate.pem`)
@@ -46,7 +48,7 @@ mongoose
   })
   .then(() => {
     debug("connected to mongodb")
-    server.listen(app.get('port'))
+    server.listen(app.get('port'))  // https://localhost:3443/
   })
   .catch(console.error)
 
