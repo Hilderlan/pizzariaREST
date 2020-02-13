@@ -1,53 +1,48 @@
 const express = require('express')
-const router = express.Router()
 
-router.route('/')
-  .all((req, res, next) => {
-    res.status(200)
-    res.append('Content-Type', 'text/plain')
-    next()
-  })
-  .get((req, res) => {
-    res.end('Exibindo combos!')
-  })
-  .post((req, res) => {
-    const { name } = req.body
-    res.end(`adicionando combo: ${name}`)
-  })
-  .put((req, res) => {
-    res.status(405)
-    res.append('Allow', ['GET', 'POST', 'DELETE'])
-    res.end('operação PUT não é suportada em /combos')
-  })
-  .delete((req, res) => {
-    res.end('deletando todos as combos!')
-  })
+const { unsupported } = require('../utils')
+const Combo = require('../models/combo')
+const auth = require('../autenticacao')
 
-router.route('/:comboID')
-  .all((req, res, next) => {
-    res.status(200)
-    res.append('Content-Type', 'text/plain')
-    next()
+const comboRouter = express.Router()
+
+comboRouter.route('/')
+  .get((_, res, next) => {
+    Combo.find({}).exec()
+      .then(res.json.bind(res))
+      .catch(next)
   })
-  .get((req, res) => {
-    const { comboID } = req.params
-    res.end(`informações do combo: ${comboID}`)
+  .post(auth.verifyUser, (req, res, next) => {
+    Combo.create(req.body)
+      .then(res.json.bind(res))
+      .catch(next)
   })
-  .post((req, res) => {
-    const { comboID } = req.params
-    res.status(405)
-    res.append('Allow', ['GET', 'PUT', 'DELETE'])
-    res.end(`operação POST não é suportada em /combos/${comboID}`)
-  })
-  .put((req, res) => {
-    const { comboID } = req.params
-    const { name } = req.body
-    res.write(`atualizando combo: ${comboID}`)
-    res.write(`novo nome: ${name}`)
-  })
-  .delete((req, res) => {
-    const { comboID } = req.params
-    res.end(`deletando combo: ${comboID}`)
+  .put(unsupported(['GET', 'POST', 'DELETE']))
+  .delete(auth.verifyUser, (_, res, next) => {
+    Combo.deleteMany({}).exec()
+      .then(res.json.bind(res))
+      .catch(next)
   })
 
-module.exports = router
+comboRouter.route('/:comboId')
+  .get((req, res, next) => {
+    Combo.findById(req.params.comboId).exec()
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+  // .post(unsupported['GET', 'PUT', 'DELETE'])
+  .put(auth.verifyUser, (req, res, next) => {
+    Combo.findByIdAndUpdate(
+      req.params.comboId,
+      { $set: req.body },
+      { new: true }).exec()
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+  .delete(auth.verifyUser, (req, res, next) => {
+    Combo.findByIdAndRemove(req.params.comboId).exec()
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+
+module.exports = comboRouter

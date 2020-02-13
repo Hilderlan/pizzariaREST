@@ -1,54 +1,116 @@
 const express = require('express')
-const router = express.Router()
 
-router.route('/')
-  .all((req, res, next) => {
-    res.status(200)
-    res.append('Content-Type', 'text/plain')
-    next()
-  })
-  .get((req, res) => {
-    res.end('enviando todas as pizzas!')
-  })
-  .post((req, res) => {
-    const { name, description } = req.body
-    res.end(`adicionando a pizza: ${name}, ${description}`)
-  })
-  .put((req, res) => {
-    res.status(405)
-    res.append('Allow', ['GET', 'POST', 'DELETE'])
-    res.end('operação PUT não é suportada em /pizzas')
-  })
-  .delete((req, res) => {
-    res.end('deletando todas as pizzas!')
-  })
+const { unsupported } = require('../utils')
+const Pizza = require('../models/pizza')
+const auth = require('../autenticacao')
 
-router.route('/:pizzaId')
-  .all((req, res, next) => {
-    res.status(200)
-    res.append('Content-Type', 'text/plain')
-    next()
+const pizzaRouter = express.Router()
+
+pizzaRouter.route('/')
+  .get((_, res, next) => {
+    Pizza.find({}).exec()
+      .then(res.json.bind(res))
+      .catch(next)
   })
-  .get((req, res) => {
-    const { pizzaId } = req.params
-    res.end(`informações da pizza: ${pizzaId}`)
+  .post(auth.verifyUser, (req, res, next) => {
+    Pizza.create(req.body)
+      .then(res.json.bind(res))
+      .catch(next)
   })
-  .post((req, res) => {
-    const { pizzaId } = req.params
-    res.status(405)
-    res.append('Allow', ['GET', 'PUT', 'DELETE'])
-    res.end(`operação POST não é suportada em /pizzas/${pizzaId}`)
-  })
-  .put((req, res) => {
-    const { pizzaId } = req.params
-    const { name, description } = req.body
-    res.write(`atualizando pizza: ${pizzaId}`)
-    res.write(`novo nome: ${name}`)
-    res.end(`nova descrição: ${description}`)
-  })
-  .delete((req, res) => {
-    const { pizzaId } = req.params
-    res.end(`deletando pizza: ${pizzaId}`)
+  .put(unsupported(['GET', 'POST', 'DELETE']))
+  .delete(auth.verifyUser, (_, res, next) => {
+    Pizza.deleteMany({}).exec()
+      .then(res.json.bind(res))
+      .catch(next)
   })
 
-module.exports = router
+pizzaRouter.route('/:pizzaId')
+  .get((req, res, next) => {
+    Pizza.findById(req.params.pizzaId).exec()
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+  .post(unsupported(['GET', 'PUT', 'DELETE']))
+  .put(auth.verifyUser, (req, res, next) => {
+    Pizza.findByIdAndUpdate(
+      req.params.pizzaId,
+      { $set: req.body },
+      { new: true }).exec()
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+  .delete(auth.verifyUser, (req, res, next) => {
+    Pizza.findByIdAndRemove(req.params.pizzaId).exec()
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+
+pizzaRouter.route('/:pizzaId/comments')
+  .get((req, res, next) => {
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => pizza ? pizza.comments : null)
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+  .post(auth.verifyUser, (req, res, next) => {
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => {
+        if (!pizza) return null
+        pizza.comments.push(req.body)
+        return pizza.save()
+      })
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+  .put(unsupported(['GET', 'POST', 'DELETE']))
+  .delete(auth.verifyUser, (req, res, next) => {
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => {
+        if (!pizza) return null
+        for (let i = pizza.comments.length - 1; i >= 0; i--) {
+          pizza.comments.id(pizza.comments[i]._id).remove()
+        }
+        return pizza.save()
+      })
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+
+pizzaRouter.route('/:pizzaId/comments/:commentId')
+  .get((req, res, next) => {
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => {
+        if (!pizza) return null
+        return pizza.comments.id(req.params.commentId)
+      })
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+  .post(unsupported(['GET', 'PUT', 'DELETE']))
+  .put(auth.verifyUser, (req, res, next) => {
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => {
+        if (!pizza) return null
+        const comment = pizza.comments.id(req.params.commentId)
+        if (!comment) return null
+        comment.rating = req.body.rating || comment.rating
+        comment.comment = req.body.comment || comment.comment
+        return pizza.save()
+      })
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+  .delete(auth.verifyUser, (req, res, next) => {
+    Pizza.findById(req.params.pizzaId)
+      .then((pizza) => {
+        if (!pizza) return null
+        const comment = pizza.comments.id(req.params.commentId)
+        if (!comment) return null
+        comment.remove()
+        return pizza.save()
+      })
+      .then(res.json.bind(res))
+      .catch(next)
+  })
+
+module.exports = pizzaRouter
