@@ -1,48 +1,33 @@
-const express = require("express")
+const express = require('express')
+
 const { unsupported } = require('../utils')
-const Pizza = require("../models/pizza")
+const Pizza = require('../models/pizza')
 const auth = require('../autenticacao')
 
-const router = express.Router()
+const pizzaRouter = express.Router()
 
-router.route("/")
-  .all((req, res, next) => {
-    res.statusCode = 200
-    res.setHeader("Content-Type", "application/json")
-    next()
-  })
-  .get(auth.verifyUser, (req, res, next) => {
-    Pizza.find({})
-      .exec()
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+pizzaRouter.route('/')
+  .get((_, res, next) => {
+    Pizza.find({}).exec()
+      .then(res.json.bind(res))
       .catch(next)
   })
-  .post((req, res, next) => {
+  .post(auth.verifyUser, (req, res, next) => {
     Pizza.create(req.body)
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+      .then(res.json.bind(res))
       .catch(next)
   })
   .put(unsupported(['GET', 'POST', 'DELETE']))
-  .delete((_, res, next) => {
-    Pizza.deleteMany({})
-      .exec()
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+  .delete(auth.verifyUser, (_, res, next) => {
+    Pizza.deleteMany({}).exec()
+      .then(res.json.bind(res))
       .catch(next)
   })
 
-router.route("/:pizzaId")
+pizzaRouter.route('/:pizzaId')
   .get((req, res, next) => {
-    Pizza.findById(req.params.pizzaId)
-      .exec()
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+    Pizza.findById(req.params.pizzaId).exec()
+      .then(res.json.bind(res))
       .catch(next)
   })
   .post(unsupported(['GET', 'PUT', 'DELETE']))
@@ -50,133 +35,82 @@ router.route("/:pizzaId")
     Pizza.findByIdAndUpdate(
       req.params.pizzaId,
       { $set: req.body },
-      { new: true }
-    )
-      .exec()
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+      { new: true }).exec()
+      .then(res.json.bind(res))
       .catch(next)
   })
   .delete((req, res, next) => {
-    Pizza.findByIdAndRemove(req.params.pizzaId)
-      .exec()
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+    Pizza.findByIdAndRemove(req.params.pizzaId).exec()
+      .then(res.json.bind(res))
       .catch(next)
   })
 
-router.route("/:pizzaId/comments")
-  .all((req, res, next) => {
-    res.status(200).append("Content-Type", "application/json")
-    next()
-  })
+pizzaRouter.route('/:pizzaId/comments')
   .get((req, res, next) => {
-    Pizza.findById(req.params.pizzaId)
-      .exec()
-      .then(pizza => {
-        const { comments = null } = pizza || {}
-        res.json({ comments })
-      })
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => pizza ? pizza.comments : null)
+      .then(res.json.bind(res))
       .catch(next)
   })
   .post((req, res, next) => {
-    Pizza.findById(req.params.pizzaId)
-      .exec()
-      .then(pizza => {
-        if (pizza != null) {
-          pizza.comments.push(req.body)
-          return pizza.save()
-        } else {
-          res.json({ error: "pizza não encontrada" })
-        }
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => {
+        if (!pizza) return null
+        pizza.comments.push(req.body)
+        return pizza.save()
       })
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+      .then(res.json.bind(res))
       .catch(next)
   })
-  .post(unsupported(['GET', 'POST', 'DELETE']))
+  .put(unsupported(['GET', 'POST', 'DELETE']))
   .delete((req, res, next) => {
-    Pizza.findById(req.params.pizzaId)
-      .exec()
-      .then(pizza => {
-        if (pizza != null) {
-          for (let i = pizza.comments.length - 1; i >= 0; i--) {
-            pizza.comments.id(pizza.comments[i]._id).remove()
-          }
-          return pizza.save()
-        } else {
-          res.json({ error: "pizza não encontrada" })
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => {
+        if (!pizza) return null
+        for (let i = pizza.comments.length - 1; i >= 0; i--) {
+          pizza.comments.id(pizza.comments[i]._id).remove()
         }
+        return pizza.save()
       })
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+      .then(res.json.bind(res))
       .catch(next)
   })
 
-router.route("/:pizzaId/comments/:commentId")
-  .all((req, res, next) => {
-    res.status(200).append("Content-Type", "application/json")
-    next()
-  })
+pizzaRouter.route('/:pizzaId/comments/:commentId')
   .get((req, res, next) => {
-    Pizza.findById(req.params.pizzaId)
-      .exec()
-      .then(pizza => {
-        if (pizza != null && pizza.comments.id(req.params.commentId) != null) {
-          res.json(pizza.comments.id(req.params.commentId))
-        } else if (pizza == null) {
-          res.json({ error: "pizza não encontrada" })
-        } else {
-          res.json({ error: "commentário não encontrado" })
-        }
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => {
+        if (!pizza) return null
+        return pizza.comments.id(req.params.commentId)
       })
+      .then(res.json.bind(res))
       .catch(next)
   })
   .post(unsupported(['GET', 'PUT', 'DELETE']))
   .put((req, res, next) => {
-    Pizza.findById(req.params.pizzaId)
-      .exec()
-      .then(pizza => {
-        if (pizza != null && pizza.comments.id(req.params.commentId) != null) {
-          if (req.body.rating) {
-            pizza.comments.id(req.params.commentId).rating = req.body.rating
-          }
-          if (req.body.comment) {
-            pizza.comments.id(req.params.commentId).comment = req.body.comment
-          }
-          return pizza.save()
-        } else if (pizza == null) {
-          res.json({ error: "pizza não encontrada" })
-        } else {
-          res.json({ error: "commentário não encontrado" })
-        }
+    Pizza.findById(req.params.pizzaId).exec()
+      .then((pizza) => {
+        if (!pizza) return null
+        const comment = pizza.comments.id(req.params.commentId)
+        if (!comment) return null
+        comment.rating = req.body.rating || comment.rating
+        comment.comment = req.body.comment || comment.comment
+        return pizza.save()
       })
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+      .then(res.json.bind(res))
       .catch(next)
   })
   .delete((req, res, next) => {
     Pizza.findById(req.params.pizzaId)
-      .exec()
-      .then(pizza => {
-        if (pizza != null && pizza.comments.id(req.params.commentId) != null) {
-          pizza.comments.id(req.params.commentId).remove()
-          return pizza.save()
-        } else if (pizza == null) {
-          res.json({ error: "pizza não encontrada" })
-        } else {
-          res.json({ error: "commentário não encontrado" })
-        }
+      .then((pizza) => {
+        if (!pizza) return null
+        const comment = pizza.comments.id(req.params.commentId)
+        if (!comment) return null
+        comment.remove()
+        return pizza.save()
       })
-      .then((pizza) =>{
-        res.json(pizza)
-      })
+      .then(res.json.bind(res))
       .catch(next)
   })
 
-module.exports = router
+module.exports = pizzaRouter

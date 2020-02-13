@@ -15,10 +15,10 @@ exports.jwt = passport.use(
   new Strategy(opts, (payload, done) => {
     User.findById(payload._id, (err, usuario) => {
       if (err) return done(err, false)
-      if (usuario){
+      if (usuario["admin"]){
         console.log(usuario);
-        if(usuario["admin"])
-          return done(null, usuario)
+        
+        return done(null, usuario)
       }
       done(null, false)
     })

@@ -1,47 +1,47 @@
 const express = require('express')
 
 const { unsupported } = require('../utils')
-const Combo = require('../models/combo')
+const Promo = require('../models/promo')
 
-const comboRouter = express.Router()
+const promoRouter = express.Router()
 
-comboRouter.route('/')
+promoRouter.route('/')
   .get((_, res, next) => {
-    Combo.find({}).exec()
+    Promo.find({}).exec()
       .then(res.json.bind(res))
       .catch(next)
   })
   .post((req, res, next) => {
-    Combo.create(req.body)
+    Promo.create(req.body)
       .then(res.json.bind(res))
       .catch(next)
   })
   .put(unsupported['GET', 'POST', 'DELETE'])
   .delete((_, res, next) => {
-    Combo.deleteMany({}).exec()
+    Promo.deleteMany({}).exec()
       .then(res.json.bind(res))
       .catch(next)
   })
 
-comboRouter.route('/:comboId')
+promoRouter.route('/:promoId')
   .get((req, res, next) => {
-    Combo.findById(req.params.comboId).exec()
+    Promo.findById(req.params.promoId).exec()
       .then(res.json.bind(res))
       .catch(next)
   })
   .post(unsupported['GET', 'PUT', 'DELETE'])
   .put((req, res, next) => {
-    Combo.findByIdAndUpdate(
-      req.params.comboId,
+    Promo.findByIdAndUpdate(
+      req.params.promoId,
       { $set: req.body },
       { new: true }).exec()
       .then(res.json.bind(res))
       .catch(next)
   })
   .delete((req, res, next) => {
-    Combo.findByIdAndRemove(req.params.comboId).exec()
+    Promo.findByIdAndRemove(req.params.promoId).exec()
       .then(res.json.bind(res))
       .catch(next)
   })
 
-module.exports = comboRouter
+module.exports = promoRouter
